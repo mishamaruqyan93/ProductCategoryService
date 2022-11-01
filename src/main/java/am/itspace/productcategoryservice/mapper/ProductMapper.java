@@ -21,4 +21,6 @@ public interface ProductMapper {
     ProductResponseDto map(Product product);
 
     List<ProductResponseDto> map(List<Product> productList);
+
+    Product map(Integer value);
 }

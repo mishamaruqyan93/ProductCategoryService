@@ -1,45 +1,47 @@
 package am.itspace.productcategoryservice.endpoint;
 
-import am.itspace.productcategoryservice.dto.CategoryPutRequestDto;
 import am.itspace.productcategoryservice.dto.CategoryRequestDto;
 import am.itspace.productcategoryservice.dto.CategoryResponseDto;
 import am.itspace.productcategoryservice.mapper.CategoryMapper;
 import am.itspace.productcategoryservice.model.Category;
-import am.itspace.productcategoryservice.service.CategoryService;
+import am.itspace.productcategoryservice.service.impl.CategoryServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @RestController
+@RequestMapping("/categories")
 public class CategoryEndpoint {
-    private CategoryService categoryService;
+    private CategoryServiceImpl categoryServiceImpl;
     private CategoryMapper categoryMapper;
 
-    public CategoryEndpoint(CategoryService categoryService, CategoryMapper categoryMapper) {
-        this.categoryService = categoryService;
+    public CategoryEndpoint(CategoryServiceImpl categoryServiceImpl, CategoryMapper categoryMapper) {
+        this.categoryServiceImpl = categoryServiceImpl;
         this.categoryMapper = categoryMapper;
     }
 
-    @GetMapping("/categories")
+    @GetMapping
     public List<CategoryResponseDto> getAllCategories() {
-        return categoryMapper.map(categoryService.getAllCategories());
+        return categoryMapper.map(categoryServiceImpl.getAllCategories());
     }
 
-    @PostMapping("/categories")
+//    @RolesAllowed("Role.ADMIN")
+    @PostMapping
     public ResponseEntity<?> create(@RequestBody CategoryRequestDto categoryRequestDto) {
-        categoryService.save(categoryMapper.map(categoryRequestDto));
+        categoryServiceImpl.save(categoryMapper.map(categoryRequestDto));
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/categories")
-    public ResponseEntity<CategoryResponseDto> update(@RequestBody CategoryPutRequestDto categoryPutRequestDto) {
-        Category categoryFromDb = categoryService.save(categoryMapper.map(categoryPutRequestDto));
-        return ResponseEntity.ok(categoryMapper.map(categoryFromDb));
+    @PutMapping("/{id}")
+    public ResponseEntity<CategoryResponseDto> update(@PathVariable("id") int id) {
+        Category putCategory = categoryServiceImpl.put(id);
+        return ResponseEntity.ok(categoryMapper.map(putCategory));
     }
 
-    @DeleteMapping("/categories/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable("id") int id) {
-        categoryService.deleteCategoryById(id);
+        categoryServiceImpl.deleteCategoryById(id);
         return ResponseEntity.noContent().build();
     }
 }

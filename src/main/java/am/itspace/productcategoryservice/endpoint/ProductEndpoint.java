@@ -1,60 +1,57 @@
 package am.itspace.productcategoryservice.endpoint;
 
-import am.itspace.productcategoryservice.dto.ProductPutRequestDto;
 import am.itspace.productcategoryservice.dto.ProductRequestDto;
 import am.itspace.productcategoryservice.dto.ProductResponseDto;
 import am.itspace.productcategoryservice.mapper.ProductMapper;
 import am.itspace.productcategoryservice.model.Product;
-import am.itspace.productcategoryservice.service.ProductService;
+import am.itspace.productcategoryservice.sequrity.CurrentUser;
+import am.itspace.productcategoryservice.service.impl.ProductServiceImpl;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
 @RestController
+@RequestMapping("/products")
 public class ProductEndpoint {
 
-    private ProductService productService;
     private ProductMapper productMapper;
+    private ProductServiceImpl productServiceImpl;
 
-    public ProductEndpoint(ProductService productService, ProductMapper productMapper) {
-        this.productService = productService;
+    public ProductEndpoint(ProductServiceImpl productServiceImpl, ProductMapper productMapper) {
+        this.productServiceImpl = productServiceImpl;
         this.productMapper = productMapper;
     }
 
-    @GetMapping("/products")
+    @GetMapping()
     public List<ProductResponseDto> getAllProducts() {
-        return productMapper.map(productService.getAllProducts());
+        return productMapper.map(productServiceImpl.getAllProducts());
     }
 
-    @GetMapping("/products/{id}")
-    public ResponseEntity<ProductResponseDto> getProduct(@PathVariable int id) {
-        Optional<Product> productById = productService.getProductById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponseDto> getProduct(@PathVariable("id") int id) {
+        Optional<Product> productById = productServiceImpl.getProductById(id);
         return ResponseEntity.ok(productMapper.map(productById.get()));
     }
 
-    @PostMapping("/products")
-    public ResponseEntity<?> create(@RequestBody ProductRequestDto productRequestDto) {
-        productService.save(productMapper.map(productRequestDto));
+    //@RolesAllowed("Role.USER")
+    @PostMapping()
+    public ResponseEntity<?> create(@RequestBody ProductRequestDto productRequestDto, @AuthenticationPrincipal CurrentUser currentUser) {
+        productServiceImpl.save(productMapper.map(productRequestDto), currentUser);
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/products")
-    public ResponseEntity<ProductResponseDto> update(@RequestBody ProductPutRequestDto productPutRequestDto) {
-        Product productFromDb = productService.save(productMapper.map(productPutRequestDto));
-        return ResponseEntity.ok(productMapper.map(productFromDb));
+    @PutMapping("/{id}")
+    public ResponseEntity<ProductResponseDto> update(@PathVariable("id") int id) {
+        Product putProduct = productServiceImpl.put(id);
+        return ResponseEntity.ok(productMapper.map(putProduct));
     }
 
-    @DeleteMapping("/products/{id}")
-    public ResponseEntity<?> delete(@PathVariable("id") int id) {
-        productService.deleteProductById(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/byCategory/{id}")
-    public ResponseEntity<List<ProductResponseDto>> getProductsByCategoryId(@PathVariable int id) {
-        productService.deleteProductById(id);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable("id") int id, @AuthenticationPrincipal CurrentUser currentUser) {
+        productServiceImpl.deleteProductById(id, currentUser);
         return ResponseEntity.noContent().build();
     }
 }
